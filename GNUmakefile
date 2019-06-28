@@ -1,3 +1,5 @@
+version := 0.2.0
+
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 WEBSITE_REPO=github.com/hashicorp/terraform-website
@@ -44,6 +46,21 @@ test-compile:
 		exit 1; \
 	fi
 	go test -c $(TEST) $(TESTARGS)
+
+
+release:
+	@for os in linux darwin windows; do\
+		if [ $$os = "windows" ]; then ext=".exe"; fi;\
+		out="bin/release/terraform-provider-powerdns_v${version}-$$os-amd64$$ext";\
+		echo "Building $$out";\
+		GOOS=$$os GOARCH=amd64 CGO_ENABLED=0 go build -ldflags='-w -s' -o $$out .;\
+	done
+
+compress:
+	upx --best bin/release/*
+
+clean:
+	rm -rf bin
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
